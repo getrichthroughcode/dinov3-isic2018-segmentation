@@ -3,7 +3,7 @@ import torch
 import torchvision.utils as vutils
 import numpy as np
 from PIL import Image
-
+import matplotlib.pyplot as plt 
 
 def Denorm(x: torch.Tensor, mean: torch.Tensor, std: torch.Tensor) -> torch.Tensor:
     return (x * std + mean).clamp(0, 1)
@@ -18,6 +18,11 @@ def OverlayMask(
 ):
     #img_dn = Denorm(img, mean, std)
     overlay = vutils.draw_segmentation_masks(img, mask, alpha)
+    arr = overlay.permute(1, 2, 0).cpu().numpy()  # C,H,W -> H,W,C
+    plt.imshow(arr)
+    plt.title("Overlay debug (draw_segmentation_masks output)")
+    plt.axis("off")
+    plt.show()
     return overlay.clamp(0, 1)
 
 
