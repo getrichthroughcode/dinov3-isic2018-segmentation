@@ -27,7 +27,7 @@ def main():
     ds = ag.ISIC2018SkinLesionDataset(
         root=args.root, split=args.split, transforms=T.Compose([T.Resize((args.size, args.size))])
     )
-    dl = DatalLoader(
+    dl = DataLoader(
         ds,
         batch_size=args.batch,
         shuffle=True,
