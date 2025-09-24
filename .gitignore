@@ -1,0 +1,46 @@
+# --- Environnements virtuels ---
+.venv/
+venv/
+env/
+.dino/
+
+# --- Python cache & compilés ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.dll
+
+# --- Jupyter notebooks checkpoints ---
+.ipynb_checkpoints/
+
+# --- Logs & sorties ---
+*.log
+*.out
+*.err
+
+# --- Coverage & tests ---
+.coverage
+.coverage.*
+htmlcov/
+.cache/
+.pytest_cache/
+.tox/
+.nox/
+
+# --- Build & packaging ---
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+*.manifest
+*.spec
+
+# --- IDE / éditeurs ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
