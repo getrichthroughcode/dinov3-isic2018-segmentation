@@ -1,7 +1,6 @@
 from typing import List
 import torch
 import torchvision.utils as vutils
-import torchvision.utils.draw_segmentation_masks as vdraw
 import numpy as np
 from PIL import Image
 
@@ -18,7 +17,7 @@ def OverlayMask(
     alpha: float = 0.5,
 ):
     #img_dn = Denorm(img, mean, std)
-    overlay = vdraw(img, mask, alpha)
+    overlay = vutils.draw_segmentation_masks(img, mask, alpha)
     return overlay.clamp(0, 1)
 
 
