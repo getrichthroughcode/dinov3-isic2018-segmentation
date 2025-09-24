@@ -1,14 +1,17 @@
+import os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 import argparse
 import math
 import torch
 import torchvision.transforms.v2 as T
 from torch.utils.data import DataLoader
-from src.utils.viz import OverlayMask, MakeGrid, SaveGrid
+from utils.viz import OverlayMask, MakeGrid, SaveGrid
+
 import any_gold as ag
 
 
 def main():
-    ap = argparse.Argumentparser()
+    ap = argparse.ArgumentParser()
     ap.add_argument("--root", default="data/isic2018")
     ap.add_argument("--split", default="train", choices=["train", "val", "test"])
     ap.add_argument("--size", default=256)
