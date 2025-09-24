@@ -21,7 +21,7 @@ def main():
     ap.add_argument("--outdir", default="results/samples")
     ap.add_argument("--seed", type=int, default=0)
 
-    args = ap.parse_arg()
+    args = ap.parse_args()
 
     torch.manual_seed(args.seed)
     ds = ag.ISIC2018SkinLesionDataset(
