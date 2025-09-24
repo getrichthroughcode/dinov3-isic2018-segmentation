@@ -16,9 +16,9 @@ def OverlayMask(
     std: torch.Tensor,
     alpha: float = 0.5,
 ):
-    img_dn = Denorm(img, mean, std)
+    #img_dn = Denorm(img, mean, std)
     color = torch.Tensor([1.0, 0.0, 0.0], device=img.device)[:, None, None]
-    overlay = img_dn * (1 - alpha * mask) + color * (alpha * mask)
+    overlay = img * (1 - alpha * mask) + color * (alpha * mask)
     return overlay.clamp(0, 1)
 
 
