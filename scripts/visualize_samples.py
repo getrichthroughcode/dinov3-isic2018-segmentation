@@ -18,7 +18,7 @@ def main():
     ap.add_argument("--num", type=int, default=16)
     ap.add_argument("--batch", type=int, default=16)
     ap.add_argument("--workers", type=int, default=0)
-    ap.add_argument("--outdir", dafault="results/samples")
+    ap.add_argument("--outdir", default="results/samples")
     ap.add_argument("--seed", type=int, default=0)
 
     args = ap.parse_arg()
