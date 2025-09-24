@@ -36,7 +36,7 @@ def main():
     )
     batch = next(iter(dl))
     imgs = batch["image"]
-    masks = batch["masks"]
+    masks = batch["mask"]
     k = min(args.num, imgs.size(0))
     overlays = [OverlayMask(imgs[i], masks[i]) for i in range(k)]
     nrow = int(math.sqrt(k)) or 1
