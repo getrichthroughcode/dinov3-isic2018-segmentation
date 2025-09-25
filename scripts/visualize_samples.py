@@ -4,7 +4,7 @@ import math
 import torch
 import torchvision.transforms.v2 as T
 from torch.utils.data import DataLoader
-from src.utils.viz import OverlayMask, MakeGrid, SaveGrid
+from dinoseg.utils.viz import OverlayMask, MakeGrid, SaveGrid
 import any_gold as ag
 
 
