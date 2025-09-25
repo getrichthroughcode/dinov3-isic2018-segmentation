@@ -1,12 +1,10 @@
-import os, sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+import os
 import argparse
 import math
 import torch
 import torchvision.transforms.v2 as T
 from torch.utils.data import DataLoader
-from utils.viz import OverlayMask, MakeGrid, SaveGrid
-
+from src.utils.viz import OverlayMask, MakeGrid, SaveGrid
 import any_gold as ag
 
 
@@ -25,7 +23,9 @@ def main():
 
     torch.manual_seed(args.seed)
     ds = ag.ISIC2018SkinLesionDataset(
-        root=args.root, split=args.split, transforms=T.Compose([T.Resize((args.size, args.size))])
+        root=args.root,
+        split=args.split,
+        transforms=T.Compose([T.Resize((args.size, args.size))]),
     )
     dl = DataLoader(
         ds,
@@ -38,7 +38,12 @@ def main():
     imgs = batch["image"]
     masks = batch["mask"].bool()
     k = min(args.num, imgs.size(0))
-    overlays = [OverlayMask(imgs[i], masks[i], mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225]) for i in range(k)]
+    overlays = [
+        OverlayMask(
+            imgs[i], masks[i], mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+        )
+        for i in range(k)
+    ]
     nrow = int(math.sqrt(k)) or 1
     grid = MakeGrid(overlays, nrow)
     os.makedirs(args.outdir, exist_ok=True)

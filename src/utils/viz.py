@@ -3,7 +3,8 @@ import torch
 import torchvision.utils as vutils
 import numpy as np
 from PIL import Image
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
+
 
 def Denorm(x: torch.Tensor, mean: torch.Tensor, std: torch.Tensor) -> torch.Tensor:
     return (x * std + mean).clamp(0, 1)
@@ -16,7 +17,7 @@ def OverlayMask(
     std: torch.Tensor,
     alpha: float = 0.5,
 ):
-    #img_dn = Denorm(img, mean, std)
+    # img_dn = Denorm(img, mean, std)
     overlay = vutils.draw_segmentation_masks(img, mask, alpha)
     arr = overlay.permute(1, 2, 0).cpu().numpy()  # C,H,W -> H,W,C
     plt.imshow(arr)

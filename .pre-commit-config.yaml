@@ -19,6 +19,6 @@ repos:
   - id: local-mypy
     name: mypy
     entry: mypy
-    language: python
+    language: system
     types: [python]
     require_serial: true
