@@ -38,12 +38,7 @@ def main():
     imgs = batch["image"]
     masks = batch["mask"].bool()
     k = min(args.num, imgs.size(0))
-    overlays = [
-        OverlayMask(
-            imgs[i], masks[i], mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-        )
-        for i in range(k)
-    ]
+    overlays = [OverlayMask(imgs[i], masks[i]) for i in range(k)]
     nrow = int(math.sqrt(k)) or 1
     grid = MakeGrid(overlays, nrow)
     os.makedirs(args.outdir, exist_ok=True)
