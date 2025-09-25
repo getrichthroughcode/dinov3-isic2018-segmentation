@@ -1,29 +1,14 @@
 from typing import List
 import torch
 import torchvision.utils as vutils
-import numpy as np
-from PIL import Image
-import matplotlib.pyplot as plt
-
-
-def Denorm(x: torch.Tensor, mean: torch.Tensor, std: torch.Tensor) -> torch.Tensor:
-    return (x * std + mean).clamp(0, 1)
 
 
 def OverlayMask(
     img: torch.Tensor,
     mask: torch.Tensor,
-    mean: torch.Tensor,
-    std: torch.Tensor,
     alpha: float = 0.5,
 ):
-    # img_dn = Denorm(img, mean, std)
     overlay = vutils.draw_segmentation_masks(img, mask, alpha)
-    arr = overlay.permute(1, 2, 0).cpu().numpy()  # C,H,W -> H,W,C
-    plt.imshow(arr)
-    plt.title("Overlay debug (draw_segmentation_masks output)")
-    plt.axis("off")
-    plt.show()
     return overlay.clamp(0, 1)
 
 
@@ -32,6 +17,4 @@ def MakeGrid(tensors: List[torch.Tensor], nrow: int = 4, pad: int = 2):
 
 
 def SaveGrid(grid: torch.Tensor, path: str):
-    arr = (grid.clamp(0, 1).cpu().numpy() * 255).astype(np.uint8)
-    arr = np.transpose(arr, (1, 2, 0))
-    Image.fromarray(arr).save(path)
+    vutils.save_image(grid, path)
