@@ -41,6 +41,7 @@ def main():
     overlays = [OverlayMask(imgs[i], masks[i]) for i in range(k)]
     nrow = int(math.sqrt(k)) or 1
     grid = MakeGrid(overlays, nrow)
+    print(grid.min().item(), grid.max().item(), grid.dtype)
     os.makedirs(args.outdir, exist_ok=True)
     out_path = os.path.join(args.outdir, f"isic2018_{args.split}_{args.size}_{k}.png")
     SaveGrid(grid, out_path)
