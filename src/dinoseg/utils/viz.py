@@ -9,7 +9,7 @@ def OverlayMask(
     alpha: float = 0.5,
 ):
     overlay = vutils.draw_segmentation_masks(img, mask, alpha)
-    return overlay.clamp(0, 1)
+    return overlay
 
 
 def MakeGrid(tensors: List[torch.Tensor], nrow: int = 4, pad: int = 2):
