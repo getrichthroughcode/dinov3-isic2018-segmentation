@@ -17,4 +17,4 @@ def MakeGrid(tensors: List[torch.Tensor], nrow: int = 4, pad: int = 2):
 
 
 def SaveGrid(grid: torch.Tensor, path: str):
-    vutils.save_image(grid, path)
+    vutils.save_image(grid.float(), path)
