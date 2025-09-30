@@ -13,6 +13,7 @@ def OverlayMask(
 
 
 def MakeGrid(tensors: List[torch.Tensor], nrow: int = 4, pad: int = 2):
+    tensors = [t.float() for t in tensors]
     return vutils.make_grid(tensors, nrow=nrow, padding=pad)
 
 
