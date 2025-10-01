@@ -9,7 +9,6 @@ def OverlayMask(
     alpha: float = 0.5,
 ):
     overlay = vutils.draw_segmentation_masks(img, mask, alpha)
-    print(type(overlay))
     return overlay
 
 
