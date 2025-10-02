@@ -67,7 +67,7 @@ def TrainOneEpoch(model, dl, optim, scaler, loss_fn, device):
 
         optim.zero_grad(set_to_none=True)
         if scaler:
-            with torch.autocast(device_type=device, dtype=torch.float16):
+            with torch.autocast(device_type="cuda", dtype=torch.float16):
                 logits = model(imgs)
                 loss = loss_fn(logits, masks)
             scaler.scale(loss).backward()
