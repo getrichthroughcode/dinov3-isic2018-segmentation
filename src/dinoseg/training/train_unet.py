@@ -61,10 +61,20 @@ def TrainOneEpoch(model, dl, optim, scaler, loss_fn, device):
     running = 0.0
     for batch in dl:
         imgs = batch["image"].to(device, non_blocking=True).float()
+        masks = batch["mask"].to(device, non_blocking=True).float()
+
+        # Normaliser la forme -> (B, 1, H, W)
+        if masks.dim() == 3:
+            masks = masks.unsqueeze(1)
+
+        elif masks.dim() == 5 and masks.size(1) == 1:
+            # (B, 1, 1, H, W) -> (B, 1, H, W)
+            masks = masks.squeeze(1)
+        """
         masks = (
             batch["mask"].to(device, non_blocking=True).float().unsqueeze(1)
         )  # (B,1,H,W)
-
+        """
         optim.zero_grad(set_to_none=True)
         if scaler:
             with torch.autocast(device_type="cuda", dtype=torch.float16):
