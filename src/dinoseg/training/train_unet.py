@@ -62,6 +62,8 @@ def TrainOneEpoch(model, dl, optim, scaler, loss_fn, device):
     for batch in dl:
         imgs = batch["image"].to(device, non_blocking=True).float()
         masks = batch["mask"].to(device, non_blocking=True).float()
+        if masks.max() > 1.0:
+            masks = masks / 255.0
 
         # Normaliser la forme -> (B, 1, H, W)
         if masks.dim() == 3:
@@ -100,6 +102,8 @@ def Eval(model, dl, loss_fn, device):
     for batch in dl:
         imgs = batch["image"].to(device).float()
         masks = batch["mask"].to(device).float()
+        if masks.max() > 1.0:
+            masks = masks / 255.0
         if masks.dim() == 3:
             masks = masks.unsqueeze(1)
         elif masks.dim() == 5 and masks.size(1) == 1:
