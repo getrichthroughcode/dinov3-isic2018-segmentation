@@ -99,8 +99,11 @@ def Eval(model, dl, loss_fn, device):
     tot_loss, tot_dice, tot_iou, n = 0.0, 0.0, 0.0, 0
     for batch in dl:
         imgs = batch["image"].to(device).float()
-        masks = batch["mask"].to(device).float().unsqueeze(1)
-
+        masks = batch["mask"].to(device).float()
+        if masks.dim() == 3:
+            masks = masks.unsqueeze(1)
+        elif masks.dim() == 5 and masks.size(1) == 1:
+            masks = masks.squeeze(1)
         logits = model(imgs)
         loss = loss_fn(logits, masks)
 
