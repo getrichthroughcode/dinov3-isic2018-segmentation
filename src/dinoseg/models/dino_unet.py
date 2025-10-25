@@ -3,7 +3,7 @@ import timm
 
 
 class DinoV3Encoder(nn.Module):
-    def __init__(self, model_name="dinov3_vit16"):
+    def __init__(self, model_name="vit_7b_patch16_dinov3.sat493m"):
         super().__init__()
         self.backbone = timm.create_model(
             model_name, pretrained=True, features_only=True
@@ -16,7 +16,7 @@ class DinoV3Encoder(nn.Module):
 
 
 class DinoUnet(nn.Module):
-    def __init__(self, n_classes=1, encoder_name="dinov3_vit16"):
+    def __init__(self, n_classes=1, encoder_name="vit_7b_patch16_dinov3.sat493m"):
         super().__init__()
         self.encoder = DinoV3Encoder(encoder_name)
         self.decoder = nn.Sequential(
