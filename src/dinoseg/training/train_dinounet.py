@@ -30,7 +30,7 @@ class TrainCfg:
 
 
 def BuildLoaders(cfg: TrainCfg):
-    tr = T.compose([T.Resize((cfg.size, cfg.size))])
+    tr = T.Compose([T.Resize((cfg.size, cfg.size))])
     ds_train = ag.ISIC2018SkinLesionDataset(root=cfg.root, split="train", transforms=tr)
     ds_val = ag.ISIC2018SkinLesionDataset(root=cfg.root, split="val", transforms=tr)
 
