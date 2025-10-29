@@ -120,9 +120,7 @@ def TrainDinoUnet(cfg: TrainCfg):
     device = torch.device(cfg.device)
     dl_train, dl_val = BuildLoaders(cfg)
 
-    model = DinoUnet(n_classes=1, encoder_name="vit_7b_patch16_dinov3.sat493m").to(
-        device
-    )
+    model = DinoUnet(n_classes=1, encoder_name="dinov2_vits14").to(device)
     loss_fn = nn.BCEWithLogitsLoss()
     optim = torch.optim.AdamW(
         model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay
