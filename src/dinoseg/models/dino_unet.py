@@ -1,40 +1,37 @@
+import torch
 import torch.nn as nn
-import timm
+import torch.nn.functional as F
 
 
-class DinoV3Encoder(nn.Module):
-    def __init__(self, model_name="vit_7b_patch16_dinov3.sat493m"):
+class DinoV2Encoder(nn.Module):
+    def __init__(self, model_name="dinov2_vits14"):
         super().__init__()
-        self.backbone = timm.create_model(
-            model_name, pretrained=True, features_only=True
-        )
-        self.out_channels = self.backbone.feature_info[-1]["num_chs"]
+        self.backbone = torch.hub.load("facebookresearch/dinov2", model_name)
+        self.embed_dim = self.backbone.embed_dim
 
     def forward(self, x):
-        feats = self.backbone(x)
-        return feats
+        feats = self.backbone.get_intermediate_layers(x, n=1)
+        last_feat = feats[-1]
+        B, N, C = last_feat.shape
+        h = w = int(N**0.5)
+        last_feat = last_feat.permute(0, 2, 1).contiguous().view(B, C, h, w)
+        return last_feat
 
 
-class DinoUnet(nn.Module):
-    def __init__(self, n_classes=1, encoder_name="vit_7b_patch16_dinov3.sat493m"):
+class DinoUNet(nn.Module):
+    def __init__(self, n_classes=1, encoder_name="dinov2_vits14"):
         super().__init__()
-        self.encoder = DinoV3Encoder(encoder_name)
+        self.encoder = DinoV2Encoder(encoder_name)
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(self.encoder.out_channels, 256, 2, stride=2),
-            nn.ReLU(),
-            nn.ConvTranspose2d(256, 128, 2, stride=2),
-            nn.ReLU(),
-            nn.Conv2d(64, n_classes),
+            nn.ConvTranspose2d(self.encoder.embed_dim, 256, kernel_size=2, stride=2),
+            nn.ReLU(inplace=True),
+            nn.ConvTranspose2d(256, 128, kernel_size=2, stride=2),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, n_classes, kernel_size=1),
         )
 
     def forward(self, x):
-        feats = self.encoder(x)
-        x = feats[-1]
+        x = self.encoder(x)
         x = self.decoder(x)
-        x = nn.functional.interpolate(
-            x,
-            size=(x.shape[-2] * 4, x.shape[-1] * 4),
-            mode="bilinear",
-            align_corners=False,
-        )
+        x = F.interpolate(x, scale_factor=4, mode="bilinear", align_corners=False)
         return x
