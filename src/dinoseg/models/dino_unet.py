@@ -22,16 +22,22 @@ class DinoUNet(nn.Module):
     def __init__(self, n_classes=1, encoder_name="dinov2_vits14"):
         super().__init__()
         self.encoder = DinoV2Encoder(encoder_name)
+
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(self.encoder.embed_dim, 256, kernel_size=2, stride=2),
+            nn.ConvTranspose2d(self.encoder.embed_dim, 512, kernel_size=2, stride=2),
+            nn.ReLU(inplace=True),
+            nn.ConvTranspose2d(512, 256, kernel_size=2, stride=2),
             nn.ReLU(inplace=True),
             nn.ConvTranspose2d(256, 128, kernel_size=2, stride=2),
             nn.ReLU(inplace=True),
-            nn.Conv2d(128, n_classes, kernel_size=1),
+            nn.ConvTranspose2d(128, 64, kernel_size=2, stride=2),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, n_classes, kernel_size=1),
         )
 
     def forward(self, x):
-        x = self.encoder(x)
-        x = self.decoder(x)
-        x = F.interpolate(x, scale_factor=4, mode="bilinear", align_corners=False)
+        B, C, H, W = x.shape
+        feats = self.encoder(x)
+        x = self.decoder(feats)
+        x = F.interpolate(x, size=(H, W), mode="bilinear", align_corners=False)
         return x
