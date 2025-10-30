@@ -1,5 +1,5 @@
 import argparse
-from dinoseg.training.train_dinounet import TrainDinoUnet, TrainCfg
+from dinoseg.training.train_dinounet import TrainCfg, TrainDinoUNet
 
 
 def main():
@@ -28,7 +28,7 @@ def main():
         mixed_precision=not args.no_amp,
     )
 
-    TrainDinoUnet(cfg)
+    TrainDinoUNet(cfg)
 
 
 if __name__ == "__main__":
