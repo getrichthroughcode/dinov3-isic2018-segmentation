@@ -7,8 +7,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 import torchvision.transforms.v2 as T
-
-from dinoseg.models.dino_unet import DinoUnet
+from dinoseg.models.dino_unet import DinoUNet
 from dinoseg.utils.metrics import SigmoidThreshold, DiceCoef, IoU
 import any_gold as ag
 
@@ -115,12 +114,12 @@ def Eval(model, dl, loss_fn, device):
     return tot_loss / n, (tot_dice / len(dl)).item(), (tot_iou / len(dl)).item()
 
 
-def TrainDinoUnet(cfg: TrainCfg):
+def TrainDinoUNet(cfg: TrainCfg):
     torch.manual_seed(cfg.seed)
     device = torch.device(cfg.device)
     dl_train, dl_val = BuildLoaders(cfg)
 
-    model = DinoUnet(n_classes=1, encoder_name="dinov2_vits14").to(device)
+    model = DinoUNet(n_classes=1, encoder_name="dinov2_vits14").to(device)
     loss_fn = nn.BCEWithLogitsLoss()
     optim = torch.optim.AdamW(
         model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay
