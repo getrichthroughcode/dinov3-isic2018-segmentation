@@ -20,17 +20,17 @@ class DinoV2Encoder(nn.Module):
             h = w = int(N**0.5)
             feat = feat.permute(0, 2, 1).contiguous().view(B, C, h, w)
             outputs.append(feat)
-        return outputs
+        return outputs  # [z3, z6, z9, z12]
 
 
 class ConvBlock(nn.Module):
     def __init__(self, in_ch, out_ch):
         super().__init__()
         self.block = nn.Sequential(
-            nn.Conv2d(in_ch, out_ch, kernel_size=3, padding=1),
+            nn.Conv2d(in_ch, out_ch, 3, padding=1),
             nn.BatchNorm2d(out_ch),
             nn.ReLU(inplace=True),
-            nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
+            nn.Conv2d(out_ch, out_ch, 3, padding=1),
             nn.BatchNorm2d(out_ch),
             nn.ReLU(inplace=True),
         )
@@ -40,10 +40,10 @@ class ConvBlock(nn.Module):
 
 
 class UpBlock(nn.Module):
-    def __init__(self, in_ch, out_ch):
+    def __init__(self, in_ch, skip_ch, out_ch):
         super().__init__()
         self.up = nn.ConvTranspose2d(in_ch, out_ch, kernel_size=2, stride=2)
-        self.conv = ConvBlock(in_ch, out_ch)
+        self.conv = ConvBlock(out_ch + skip_ch, out_ch)
 
     def forward(self, x, skip):
         x = self.up(x)
@@ -59,13 +59,14 @@ class DinoUNet(nn.Module):
     def __init__(self, n_classes=1, encoder_name="dinov2_vits14"):
         super().__init__()
         self.encoder = DinoV2Encoder(encoder_name)
+        C = self.encoder.embed_dim
 
-        self.up1 = UpBlock(768, 512)
-        self.up2 = UpBlock(512, 256)
-        self.up3 = UpBlock(256, 128)
-        self.up4 = UpBlock(128, 64)
+        self.up1 = UpBlock(C, C, 512)
+        self.up2 = UpBlock(512, C, 256)
+        self.up3 = UpBlock(256, C, 128)
+        self.up4 = UpBlock(128, C, 64)
 
-        self.final_conv = nn.Conv2d(64, n_classes, kernel_size=1)
+        self.final_conv = nn.Conv2d(64, n_classes, 1)
 
     def forward(self, x):
         B, C, H, W = x.shape
@@ -74,7 +75,6 @@ class DinoUNet(nn.Module):
         x = self.up2(x, z6)
         x = self.up3(x, z3)
         x = self.up4(x, z3)
-
         x = self.final_conv(x)
         x = F.interpolate(x, size=(H, W), mode="bilinear", align_corners=False)
         return x
