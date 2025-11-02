@@ -10,6 +10,6 @@
 
 ## 🚀 Installation
 ```bash
-git clone https://github.com/getrichthroughcode/dinoseg.git
+git clone https://github.com/getrichthroughcode/dinov3-isic2018-segmentation.git
 cd dinoseg
 pip install -e .
