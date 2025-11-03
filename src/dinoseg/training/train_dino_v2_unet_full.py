@@ -7,8 +7,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 import torchvision.transforms.v2 as T
-
-from dinoseg.models.minimal_unet import UNet
+from dinoseg.models.dino_v2_unet import DinoUNet
 from dinoseg.utils.metrics import SigmoidThreshold, DiceCoef, IoU
 import any_gold as ag
 
@@ -22,7 +21,7 @@ class TrainCfg:
     epochs: int = 50
     lr: float = 3e-4
     weight_decay: float = 1e-4
-    outdir: str = "runs/unet_baseline"
+    outdir: str = "runs/dino_unet"
     seed: int = 0
     resume: Optional[str] = None
     mixed_precision: bool = True
@@ -41,13 +40,15 @@ def BuildLoaders(cfg: TrainCfg):
         num_workers=cfg.workers,
         pin_memory=True,
     )
+
     dl_val = DataLoader(
         ds_val,
         batch_size=cfg.batch,
-        shuffle=False,
+        shuffle=True,
         num_workers=cfg.workers,
         pin_memory=True,
     )
+
     return dl_train, dl_val
 
 
@@ -65,18 +66,11 @@ def TrainOneEpoch(model, dl, optim, scaler, loss_fn, device):
         if masks.max() > 1.0:
             masks = masks / 255.0
 
-        # Normaliser la forme -> (B, 1, H, W)
         if masks.dim() == 3:
             masks = masks.unsqueeze(1)
-
         elif masks.dim() == 5 and masks.size(1) == 1:
-            # (B, 1, 1, H, W) -> (B, 1, H, W)
             masks = masks.squeeze(1)
-        """
-        masks = (
-            batch["mask"].to(device, non_blocking=True).float().unsqueeze(1)
-        )  # (B,1,H,W)
-        """
+
         optim.zero_grad(set_to_none=True)
         if scaler:
             with torch.autocast(device_type="cuda", dtype=torch.float16):
@@ -108,10 +102,11 @@ def Eval(model, dl, loss_fn, device):
             masks = masks.unsqueeze(1)
         elif masks.dim() == 5 and masks.size(1) == 1:
             masks = masks.squeeze(1)
+
         logits = model(imgs)
         loss = loss_fn(logits, masks)
-
         preds = SigmoidThreshold(logits)
+
         tot_loss += loss.item() * imgs.size(0)
         tot_dice += DiceCoef(preds, masks)
         tot_iou += IoU(preds, masks)
@@ -119,12 +114,12 @@ def Eval(model, dl, loss_fn, device):
     return tot_loss / n, (tot_dice / len(dl)).item(), (tot_iou / len(dl)).item()
 
 
-def TrainUNet(cfg: TrainCfg):
+def TrainDinoUNet(cfg: TrainCfg):
     torch.manual_seed(cfg.seed)
     device = torch.device(cfg.device)
     dl_train, dl_val = BuildLoaders(cfg)
 
-    model = UNet(n_channels=3, n_classes=1, base_ch=32).to(device)
+    model = DinoUNet(n_classes=1, encoder_name="dinov2_vits14").to(device)
     loss_fn = nn.BCEWithLogitsLoss()
     optim = torch.optim.AdamW(
         model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay
@@ -163,6 +158,7 @@ def TrainUNet(cfg: TrainCfg):
             },
             os.path.join(cfg.outdir, "latest.pt"),
         )
+
         if val_dice > best_dice:
             best_dice = val_dice
             SaveCheckpoint(
@@ -176,5 +172,3 @@ def TrainUNet(cfg: TrainCfg):
             )
 
     print(f"Best Dice: {best_dice:.4f} → {os.path.join(cfg.outdir, 'best.pt')}")
-
-    return os.path.join(cfg.outdir, "best.pt")
