@@ -13,6 +13,7 @@ def main():
     ap.add_argument("--weight_decay", type=float, default=1e-4)
     ap.add_argument("--outdir", default="runs/DinoUnet")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--fraction", type=float, default=1.0)
     ap.add_argument("--no_amp", action="store_true", help="Disable mixed precision")
     args = ap.parse_args()
     cfg = TrainCfg(
@@ -25,6 +26,7 @@ def main():
         weight_decay=args.weight_decay,
         outdir=args.outdir,
         seed=args.seed,
+        fraction=args.fraction,
         mixed_precision=not args.no_amp,
     )
 
