@@ -1,5 +1,5 @@
 import argparse
-from dinoseg.training.train_dino_v2_unet_full import TrainCfg, TrainDinoUNet
+from dinoseg.training.train_dino_v2_unet import TrainCfg, TrainDinoUNet
 
 
 def main():
