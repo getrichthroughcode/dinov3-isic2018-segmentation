@@ -1,5 +1,5 @@
 import argparse
-from dinoseg.training.train_dino_v2_unet import TrainCfg, TrainDinoUNet
+from dinoseg.training.train_dino_v3_unet import TrainCfg, TrainDinoUNet
 
 
 def main():
@@ -11,7 +11,7 @@ def main():
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--lr", type=float, default=3e-4)
     ap.add_argument("--weight_decay", type=float, default=1e-4)
-    ap.add_argument("--outdir", default="runs/Dinov2Unet")
+    ap.add_argument("--outdir", default="runs/Dinov3Unet")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--fraction", type=float, default=1.0)
     ap.add_argument("--no_amp", action="store_true", help="Disable mixed precision")
