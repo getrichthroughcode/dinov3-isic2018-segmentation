@@ -5,9 +5,10 @@ from dataclasses import dataclass
 from typing import Optional
 import torch
 from torch import nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 import torchvision.transforms.v2 as T
 from dinoseg.models.dino_v2_unet import DinoUNet
+from dinoseg.utils.seed import set_seed
 from dinoseg.utils.metrics import SigmoidThreshold, DiceCoef, IoU
 import any_gold as ag
 
@@ -22,7 +23,8 @@ class TrainCfg:
     lr: float = 3e-4
     weight_decay: float = 1e-4
     outdir: str = "runs/dino_unet"
-    seed: int = 0
+    seed: int = 42
+    fraction: float = 1.0
     resume: Optional[str] = None
     mixed_precision: bool = True
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
@@ -32,6 +34,17 @@ def BuildLoaders(cfg: TrainCfg):
     tr = T.Compose([T.Resize((cfg.size, cfg.size))])
     ds_train = ag.ISIC2018SkinLesionDataset(root=cfg.root, split="train", transforms=tr)
     ds_val = ag.ISIC2018SkinLesionDataset(root=cfg.root, split="val", transforms=tr)
+
+    if cfg.fraction < 1.0:
+        g = torch.manual_seed(cfg.seed)
+
+        num_samples_train = int(len(ds_train) * cfg.fraction)
+        indices_train = torch.randperm(len(ds_train), generator=g)[:num_samples_train]
+        ds_train = Subset(ds_train, indices_train.tolist())
+
+        num_samples_val = int(len(ds_val) * cfg.fraction)
+        indices_val = torch.randperm(len(ds_val), generator=g)[:num_samples_val]
+        ds_val = Subset(ds_val, indices_val.tolist())
 
     dl_train = DataLoader(
         ds_train,
@@ -44,7 +57,7 @@ def BuildLoaders(cfg: TrainCfg):
     dl_val = DataLoader(
         ds_val,
         batch_size=cfg.batch,
-        shuffle=True,
+        shuffle=False,
         num_workers=cfg.workers,
         pin_memory=True,
     )
@@ -115,7 +128,7 @@ def Eval(model, dl, loss_fn, device):
 
 
 def TrainDinoUNet(cfg: TrainCfg):
-    torch.manual_seed(cfg.seed)
+    set_seed(cfg.seed)
     device = torch.device(cfg.device)
     dl_train, dl_val = BuildLoaders(cfg)
 
