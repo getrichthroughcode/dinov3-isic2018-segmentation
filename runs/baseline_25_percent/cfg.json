@@ -1,0 +1,15 @@
+{
+  "root": "data/isic2018",
+  "size": 252,
+  "batch": 8,
+  "workers": 2,
+  "epochs": 20,
+  "lr": 0.0003,
+  "weight_decay": 0.0001,
+  "outdir": "runs/baseline_25_percent",
+  "seed": 42,
+  "fraction": 0.25,
+  "resume": null,
+  "mixed_precision": true,
+  "device": "cuda"
+}
