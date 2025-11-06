@@ -1,12 +1,31 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from pathlib import Path
 
 
 class DinoV3Encoder(nn.Module):
-    def __init__(self, model_name="dinov3_vits16", n_layers=12):
+    def __init__(self, model_name="dinov3_vits16", weights_path=None, n_layers=12):
         super().__init__()
-        self.backbone = torch.hub.load("facebookresearch/dinov3", model_name)
+        repo_dir = torch.hub.get_dir() + "/facebookresearch_dinov3_main"
+        self.backbone = torch.hub.load(repo_dir, model_name, source="local")
+        if weights_path is not None:
+            weights_path = Path(weights_path)
+            if not weights_path.exists():
+                raise FileNotFoundError(f"Weights not found : {weights_path}")
+            state_dict = torch.load(weights_path, map_location="cpu")
+            if "model" in state_dict:
+                state_dict = state_dict["model"]
+
+            missing, unexpected = self.backbone.load_state_dict(
+                state_dict, strict=False
+            )
+            print(f"[DINOv3] loaded from {weights_path}")
+            if missing:
+                print(f" - Missing Keys : {len(missing)}")
+            if unexpected:
+                print(f" - Unexpected Keys : {len(unexpected)}")
+
         self.embed_dim = self.backbone.embed_dim
         self.n_layers = n_layers
 
@@ -58,7 +77,10 @@ class UpBlock(nn.Module):
 class Dinov3UNet(nn.Module):
     def __init__(self, n_classes=1, encoder_name="dinov3_vits16"):
         super().__init__()
-        self.encoder = DinoV3Encoder(encoder_name)
+        self.encoder = DinoV3Encoder(
+            encoder_name,
+            weights_path="dinoseg/weights/dinov3_vits16_pretrain_lvd1689m-08c60483.pth",
+        )
         C = self.encoder.embed_dim
         self.up1 = UpBlock(C, C, 512)
         self.up2 = UpBlock(512, C, 256)

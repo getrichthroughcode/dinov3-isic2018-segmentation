@@ -44,3 +44,8 @@ pip-wheel-metadata/
 *.swp
 *.swo
 .DS_Store
+
+# --- Model weights ---
+weights/
+*.pth
+*.pt
