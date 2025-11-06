@@ -27,7 +27,7 @@ def main():
         weight_decay=args.weight_decay,
         outdir=args.outdir,
         seed=args.seed,
-        fraxtion=args.fraction,
+        fraction=args.fraction,
         mixed_precision=not args.no_amp,
     )
     TrainUNet(cfg)
