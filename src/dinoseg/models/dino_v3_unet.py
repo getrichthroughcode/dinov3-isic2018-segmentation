@@ -1,30 +1,17 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pathlib import Path
 
 
 class DinoV3Encoder(nn.Module):
     def __init__(self, model_name="dinov3_vits16", weights_path=None, n_layers=12):
         super().__init__()
-        repo_dir = torch.hub.get_dir() + "/facebookresearch_dinov3_main"
-        self.backbone = torch.hub.load(repo_dir, model_name, source="local")
-        if weights_path is not None:
-            weights_path = Path(weights_path)
-            if not weights_path.exists():
-                raise FileNotFoundError(f"Weights not found : {weights_path}")
+        if weights_path is None:
+            self.backbone = torch.hub.load("facebookresearch/dinov3", model_name)
+        else:
+            self.backbone = torch.hub.load("facebookresearch/dinov3", model_name)
             state_dict = torch.load(weights_path, map_location="cpu")
-            if "model" in state_dict:
-                state_dict = state_dict["model"]
-
-            missing, unexpected = self.backbone.load_state_dict(
-                state_dict, strict=False
-            )
-            print(f"[DINOv3] loaded from {weights_path}")
-            if missing:
-                print(f" - Missing Keys : {len(missing)}")
-            if unexpected:
-                print(f" - Unexpected Keys : {len(unexpected)}")
+            self.backbone.load_state_dict(state_dict, strict=True)
 
         self.embed_dim = self.backbone.embed_dim
         self.n_layers = n_layers
