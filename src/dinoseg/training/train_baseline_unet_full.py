@@ -45,6 +45,7 @@ def BuildLoaders(cfg: TrainCfg):
         num_samples_val = int(len(ds_val) * cfg.fraction)
         indices_val = torch.randperm(len(ds_val), generator=g)[:num_samples_val]
         ds_val = Subset(ds_val, indices_val.tolist())
+        print(f"training and evaluating on {cfg.fraction * 100}% of available data")
 
     dl_train = DataLoader(
         ds_train,
