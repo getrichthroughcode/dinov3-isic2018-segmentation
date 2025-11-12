@@ -1,32 +1,35 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import timm
 
 
 class DinoV3Encoder(nn.Module):
     def __init__(self, model_name="dinov3_vits16", weights_path=None, n_layers=12):
         super().__init__()
-        if weights_path is None:
-            self.backbone = torch.hub.load("facebookresearch/dinov3", model_name)
-        else:
-            self.backbone = torch.hub.load("facebookresearch/dinov3", model_name)
-            state_dict = torch.load(weights_path, map_location="cpu")
-            self.backbone.load_state_dict(state_dict, strict=True)
+
+        model_name_map = {
+            "dinov3_vits16": "dinov3_small_patch16_518",
+            "dinov3_vitb16": "dinov3_base_patch16_518",
+            "dinov3_vitl16": "dinov3_large_patch16_518",
+        }
+        timm_model_name = model_name_map.get(model_name, model_name)
+
+        out_indices = (2, 5, 8, 11)
+
+        self.backbone = timm.create_model(
+            timm_model_name,
+            pretrained=weights_path is None,
+            features_only=True,
+            out_indices=out_indices,
+            checkpoint_path=weights_path if weights_path else "",
+        )
 
         self.embed_dim = self.backbone.embed_dim
-        self.n_layers = n_layers
 
     def forward(self, x):
-        feats = self.backbone.get_intermediate_layers(x, n=self.n_layers)
-        idxs = [2, 5, 8, 11]
-        outputs = []
-        for i in idxs:
-            feat = feats[i]
-            B, N, C = feat.shape
-            h = w = int(N**0.5)
-            feat = feat.permute(0, 2, 1).contiguous().view(B, C, h, w)
-            outputs.append(feat)
-        return outputs
+        feats = self.backbone(x)
+        return feats
 
 
 class ConvBlock(nn.Module):
@@ -66,7 +69,6 @@ class Dinov3UNet(nn.Module):
         super().__init__()
         self.encoder = DinoV3Encoder(
             encoder_name,
-            weights_path="dinoseg/weights/dinov3_vits16_pretrain_lvd1689m-08c60483.pth",
         )
         C = self.encoder.embed_dim
         self.up1 = UpBlock(C, C, 512)
