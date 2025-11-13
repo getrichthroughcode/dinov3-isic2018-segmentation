@@ -24,7 +24,7 @@ class DinoV3Encoder(nn.Module):
             out_indices=out_indices,
         )
 
-        self.embed_dim = self.backbone.embed_dim
+        self.embed_dim = self.backbone.model.embed_dim
 
     def forward(self, x):
         feats = self.backbone(x)
