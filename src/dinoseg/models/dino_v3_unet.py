@@ -14,15 +14,14 @@ class DinoV3Encoder(nn.Module):
             "dinov3_vitl16": "dinov3_large_patch16_518",
         }
         timm_model_name = model_name_map.get(model_name, model_name)
-
+        str(timm_model_name)
         out_indices = (2, 5, 8, 11)
 
         self.backbone = timm.create_model(
-            timm_model_name,
-            pretrained=weights_path is None,
+            "vit_small_patch16_dinov3.lvd1689m",
+            pretrained=True,
             features_only=True,
             out_indices=out_indices,
-            checkpoint_path=weights_path if weights_path else "",
         )
 
         self.embed_dim = self.backbone.embed_dim
