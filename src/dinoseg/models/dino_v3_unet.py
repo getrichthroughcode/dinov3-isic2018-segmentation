@@ -1,4 +1,3 @@
-# dinov3_adapter_fapm_unet.py
 from typing import Tuple
 
 import torch
@@ -56,7 +55,7 @@ class ConvBNReLU(nn.Module):
 class DINOAdapter(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
-        if in_channels != out_channels:
+        if len(in_channels) != len(out_channels):
             raise ValueError("in_channels and out_channels must have same length.")
         self.projs = nn.ModuleList(
             [nn.Conv2d(i, o, kernel_size=1) for i, o in zip(in_channels, out_channels)]
@@ -120,7 +119,7 @@ class DecoderBlock(nn.Module):
         self.conv1 = ConvBNReLU(out_ch + skip_ch, out_ch)
         self.conv2 = ConvBNReLU(out_ch, out_ch)
 
-    def forward(self, x: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
+    def forward(self, x, skip):
         x = self.up(x)
         if x.shape[-2:] != skip.shape[-2:]:
             x = F.interpolate(
@@ -148,7 +147,7 @@ class Dinov3UNet(nn.Module):
             for p in self.encoder.parameters():
                 p.requires_grad = False
 
-        enc_ch = self.encoder.embed_dim
+        enc_ch = tuple([self.encoder.embed_dim] * 4)
         self.adapter = DINOAdapter(enc_ch, adapter_out_channels)
 
         shared_ctx_dim = 128
