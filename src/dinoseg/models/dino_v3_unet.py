@@ -148,7 +148,7 @@ class Dinov3UNet(nn.Module):
             for p in self.encoder.parameters():
                 p.requires_grad = False
 
-        enc_ch = self.embed_dim
+        enc_ch = self.encoder.embed_dim
         self.adapter = DINOAdapter(enc_ch, adapter_out_channels)
 
         shared_ctx_dim = 128
