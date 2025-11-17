@@ -56,7 +56,7 @@ class ConvBNReLU(nn.Module):
 class DINOAdapter(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
-        if len(in_channels) != len(out_channels):
+        if in_channels != out_channels:
             raise ValueError("in_channels and out_channels must have same length.")
         self.projs = nn.ModuleList(
             [nn.Conv2d(i, o, kernel_size=1) for i, o in zip(in_channels, out_channels)]
