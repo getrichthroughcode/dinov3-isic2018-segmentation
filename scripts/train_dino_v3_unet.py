@@ -14,6 +14,7 @@ def main():
     ap.add_argument("--outdir", default="runs/Dinov3Unet")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--fraction", type=float, default=1.0)
+    ap.add_argument("--frozen", type=bool, default=True)
     ap.add_argument("--no_amp", action="store_true", help="Disable mixed precision")
     args = ap.parse_args()
     cfg = TrainCfg(
@@ -27,6 +28,7 @@ def main():
         outdir=args.outdir,
         seed=args.seed,
         fraction=args.fraction,
+        frozen=args.frozen,
         mixed_precision=not args.no_amp,
     )
 

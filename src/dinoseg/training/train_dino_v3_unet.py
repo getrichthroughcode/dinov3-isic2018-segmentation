@@ -7,7 +7,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader, Subset
 import torchvision.transforms.v2 as T
-from dinoseg.models.dino_v3_unet import Dinov3UNet
+from dinoseg.models.dino_v3_unet import Dinov3UNet, count_params
 from dinoseg.utils.seed import set_seed
 from dinoseg.utils.metrics import SigmoidThreshold, DiceCoef, IoU
 import any_gold as ag
@@ -27,6 +27,7 @@ class TrainCfg:
     fraction: float = 1.0
     resume: Optional[str] = None
     mixed_precision: bool = True
+    frozen: bool = True
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
 
 
@@ -34,7 +35,6 @@ def BuildLoaders(cfg: TrainCfg):
     tr = T.Compose([T.Resize((cfg.size, cfg.size))])
     ds_train = ag.ISIC2018SkinLesionDataset(root=cfg.root, split="train", transforms=tr)
     ds_val = ag.ISIC2018SkinLesionDataset(root=cfg.root, split="val", transforms=tr)
-
     if cfg.fraction < 1.0:
         g = torch.manual_seed(cfg.seed)
 
@@ -131,8 +131,8 @@ def TrainDinoUNet(cfg: TrainCfg):
     set_seed(cfg.seed)
     device = torch.device(cfg.device)
     dl_train, dl_val = BuildLoaders(cfg)
-
-    model = Dinov3UNet(n_classes=1, encoder_name="dinov3_vits16").to(device)
+    model = Dinov3UNet(encoder_name="dinov3_vits16", freeze_encoder=cfg.frozen)
+    print(count_params(model))
     loss_fn = nn.BCEWithLogitsLoss()
     optim = torch.optim.AdamW(
         model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay

@@ -1,10 +1,13 @@
+# dinov3_adapter_fapm_unet.py
+from typing import Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import timm
 
 
-def count_params(model):
+def count_params(model: nn.Module) -> dict:
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     total = sum(p.numel() for p in model.parameters())
     return {"trainable": trainable, "total": total}
@@ -12,7 +15,10 @@ def count_params(model):
 
 class DinoV3Encoder(nn.Module):
     def __init__(
-        self, model_name="dinov3_vits16", pretrained=True, out_indices=(2, 5, 8, 11)
+        self,
+        model_name: str = "dinov3_vits16",
+        pretrained: bool = True,
+        out_indices: Tuple[int, int, int, int] = (2, 5, 8, 11),
     ):
         super().__init__()
         name_map = {
@@ -27,105 +33,156 @@ class DinoV3Encoder(nn.Module):
             features_only=True,
             out_indices=out_indices,
         )
-        self.out_channels = self.backbone.feature_info.channels()
-        self.embed_dim = int(self.out_channels[-1])
+        self.embed_dim = getattr(self.backbone.model, "embed_dim")
 
     def forward(self, x):
-        return tuple(self.backbone(x)[:4])
+        feats = self.backbone(x)
+        return tuple(feats[:])
 
 
-class ConvBlock(nn.Module):
-    def __init__(self, in_ch, out_ch, ks=3, pad=1):
+class ConvBNReLU(nn.Module):
+    def __init__(self, in_ch: int, out_ch: int, ks: int = 3, pad: int = 1):
         super().__init__()
-        self.block = nn.Sequential(
+        self.net = nn.Sequential(
             nn.Conv2d(in_ch, out_ch, ks, padding=pad, bias=False),
-            nn.BatchNorm2d(out_ch),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(out_ch, out_ch, ks, padding=pad, bias=False),
             nn.BatchNorm2d(out_ch),
             nn.ReLU(inplace=True),
         )
 
     def forward(self, x):
-        return self.block(x)
+        return self.net(x)
 
 
-class UpBlock(nn.Module):
-    def __init__(self, in_ch, skip_ch, out_ch):
+class DINOAdapter(nn.Module):
+    def __init__(self, in_channels, out_channels):
         super().__init__()
-        self.up = nn.ConvTranspose2d(in_ch, out_ch, 2, stride=2)
-        self.conv = ConvBlock(out_ch + skip_ch, out_ch)
+        if len(in_channels) != len(out_channels):
+            raise ValueError("in_channels and out_channels must have same length.")
+        self.projs = nn.ModuleList(
+            [nn.Conv2d(i, o, kernel_size=1) for i, o in zip(in_channels, out_channels)]
+        )
+        self.refiners = nn.ModuleList([ConvBNReLU(o, o) for o in out_channels])
 
-    def forward(self, x, skip):
+    def forward(self, feats):
+        outs = []
+        for f, p, r in zip(feats, self.projs, self.refiners):
+            t = p(f)
+            t = r(t)
+            outs.append(t)
+        return outs
+
+
+class SharedContextAggregator(nn.Module):
+    def __init__(self, in_channels, hidden):
+        super().__init__()
+        total = sum(in_channels)
+        self.pool = nn.AdaptiveAvgPool2d(1)
+        self.fc = nn.Sequential(
+            nn.Linear(total, hidden, bias=False),
+            nn.ReLU(inplace=True),
+            nn.Linear(hidden, hidden, bias=False),
+            nn.ReLU(inplace=True),
+        )
+
+    def forward(self, feats):
+        pooled = [self.pool(f).flatten(1) for f in feats]
+        concat = torch.cat(pooled, dim=1)
+        return self.fc(concat)
+
+
+class FAPM(nn.Module):
+    def __init__(self, channels: int, context_dim: int):
+        super().__init__()
+        self.conv_spatial = nn.Sequential(
+            nn.Conv2d(channels, channels, 3, padding=1, bias=False),
+            nn.BatchNorm2d(channels),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(channels, channels, 3, padding=1, bias=False),
+            nn.BatchNorm2d(channels),
+        )
+        self.ctx_proj = nn.Linear(context_dim, channels, bias=False)
+        self.gate = nn.Sequential(nn.ReLU(inplace=True), nn.Sigmoid())
+
+    def forward(self, x: torch.Tensor, ctx: torch.Tensor) -> torch.Tensor:
+        y = self.conv_spatial(x)
+        b, c, h, w = y.shape
+        ctx_v = self.ctx_proj(ctx).view(b, c, 1, 1)
+        y = y + ctx_v
+        g = self.gate(y.mean(dim=(2, 3)))
+        g = g.view(b, c, 1, 1)
+        return x + y * g
+
+
+class DecoderBlock(nn.Module):
+    def __init__(self, in_ch: int, skip_ch: int, out_ch: int):
+        super().__init__()
+        self.up = nn.ConvTranspose2d(in_ch, out_ch, kernel_size=2, stride=2)
+        self.conv1 = ConvBNReLU(out_ch + skip_ch, out_ch)
+        self.conv2 = ConvBNReLU(out_ch, out_ch)
+
+    def forward(self, x: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
         x = self.up(x)
         if x.shape[-2:] != skip.shape[-2:]:
             x = F.interpolate(
                 x, size=skip.shape[-2:], mode="bilinear", align_corners=False
             )
         x = torch.cat([x, skip], dim=1)
-        return self.conv(x)
+        x = self.conv1(x)
+        x = self.conv2(x)
+        return x
 
 
 class Dinov3UNet(nn.Module):
     def __init__(
         self,
-        n_classes=1,
-        encoder_name="dinov3_vits16",
-        pretrained=True,
-        freeze_encoder=True,
-        projector_channels=(32, 64, 128, 256),
+        encoder_name: str = "dinov3_vits16",
+        pretrained: bool = True,
+        freeze_encoder: bool = True,
+        adapter_out_channels: Tuple[int, int, int, int] = (256, 128, 64, 32),
+        final_channels: int = 32,
+        n_classes: int = 1,
     ):
         super().__init__()
-        self.encoder = DinoV3Encoder(encoder_name, pretrained)
+        self.encoder = DinoV3Encoder(encoder_name, pretrained=pretrained)
         if freeze_encoder:
             for p in self.encoder.parameters():
                 p.requires_grad = False
 
-        p1_ch, p2_ch, p3_ch, p4_ch = projector_channels
         enc_ch = self.encoder.out_channels
+        self.adapter = DINOAdapter(enc_ch, adapter_out_channels)
 
-        self.proj_p1 = nn.Conv2d(enc_ch[0], p1_ch, 1)
-        self.proj_p2 = nn.Conv2d(enc_ch[1], p2_ch, 1)
-        self.proj_p3 = nn.Conv2d(enc_ch[2], p3_ch, 1)
-        self.proj_p4 = nn.Conv2d(enc_ch[3], p4_ch, 1)
-
-        self.up1 = UpBlock(p4_ch, p3_ch, p3_ch)
-        self.up2 = UpBlock(p3_ch, p2_ch, p2_ch)
-        self.up3 = UpBlock(p2_ch, p1_ch, p1_ch)
-
-        final_ch = max(p1_ch // 2, 16)
-        self.up_final = nn.Sequential(
-            nn.ConvTranspose2d(p1_ch, final_ch, 2, stride=2),
-            nn.BatchNorm2d(final_ch),
-            nn.ReLU(inplace=True),
+        shared_ctx_dim = 128
+        self.ctx_agg = SharedContextAggregator(adapter_out_channels, shared_ctx_dim)
+        self.fapms = nn.ModuleList(
+            [FAPM(ch, shared_ctx_dim) for ch in adapter_out_channels]
         )
-        self.final_conv = nn.Conv2d(final_ch, n_classes, 1)
+
+        p4, p3, p2, p1 = adapter_out_channels
+        self.dec4 = nn.Sequential(ConvBNReLU(p4, p4))
+        self.dec3 = DecoderBlock(in_ch=p4, skip_ch=p3, out_ch=p3)
+        self.dec2 = DecoderBlock(in_ch=p3, skip_ch=p2, out_ch=p2)
+        self.dec1 = DecoderBlock(in_ch=p2, skip_ch=p1, out_ch=p1)
+
+        self.head_conv = nn.Sequential(
+            ConvBNReLU(p1, final_channels),
+            nn.Conv2d(final_channels, n_classes, kernel_size=1),
+        )
 
     def forward(self, x):
-        b, c, h, w = x.shape
-        f1, f2, f3, f4 = self.encoder(x)
+        b, _, h, w = x.shape
+        feats = self.encoder(x)
+        adapts = self.adapter(feats)
 
-        p1 = self.proj_p1(f1)
-        p2 = self.proj_p2(f2)
-        p3 = self.proj_p3(f3)
-        p4 = self.proj_p4(f4)
+        ctx = self.ctx_agg(adapts)
+        fapm_outs = [m(a, ctx) for m, a in zip(self.fapms, adapts)]
 
-        h4, w4 = p4.shape[-2], p4.shape[-1]
-        s1 = (h4, w4)
-        s1 = s1
-        s2 = (min(h4 * 2, h), min(w4 * 2, w))
-        s3 = (min(h4 * 4, h), min(w4 * 4, w))
-        s4 = (min(h4 * 8, h), min(w4 * 8, w))
+        p4, p3, p2, p1 = fapm_outs
 
-        p3 = F.interpolate(p3, s2, mode="bilinear", align_corners=False)
-        p2 = F.interpolate(p2, s3, mode="bilinear", align_corners=False)
-        p1 = F.interpolate(p1, s4, mode="bilinear", align_corners=False)
+        x = self.dec4(p4)
+        x = self.dec3(x, p3)
+        x = self.dec2(x, p2)
+        x = self.dec1(x, p1)
 
-        x = self.up1(p4, p3)
-        x = self.up2(x, p2)
-        x = self.up3(x, p1)
-
-        x = self.up_final(x)
-        x = self.final_conv(x)
-        x = F.interpolate(x, size=(h, w), mode="bilinear", align_corners=False)
-        return x
+        out = self.head_conv(x)
+        out = F.interpolate(out, size=(h, w), mode="bilinear", align_corners=False)
+        return out
