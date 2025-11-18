@@ -131,7 +131,9 @@ def TrainDinoUNet(cfg: TrainCfg):
     set_seed(cfg.seed)
     device = torch.device(cfg.device)
     dl_train, dl_val = BuildLoaders(cfg)
-    model = Dinov3UNet(encoder_name="dinov3_vits16", freeze_encoder=cfg.frozen)
+    model = Dinov3UNet(encoder_name="dinov3_vits16", freeze_encoder=cfg.frozen).to(
+        device
+    )
     print(count_params(model))
     loss_fn = nn.BCEWithLogitsLoss()
     optim = torch.optim.AdamW(
