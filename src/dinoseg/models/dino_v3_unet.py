@@ -169,7 +169,9 @@ class Dinov3UNet(nn.Module):
 
     def forward(self, x):
         b, _, h, w = x.shape
-        feats = self.encoder(x)
+        with torch.cuda.amp.autocast(enabled=False):
+            x32 = x.float()
+            feats = self.encoder(x32)
         adapts = self.adapter(feats)
 
         ctx = self.ctx_agg(adapts)
