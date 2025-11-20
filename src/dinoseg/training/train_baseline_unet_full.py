@@ -14,6 +14,31 @@ from dinoseg.utils.seed import set_seed
 import any_gold as ag
 
 
+class EarlyStopping:
+    def __init__(self, patience=10, min_delta=0.0):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.best = None
+        self.counter = 0
+        self.should_stop = False
+
+    def step(self, metric):
+        if self.best is None:
+            self.best = metric
+            return False
+
+        if metric > self.best + self.min_delta:
+            self.best = metric
+            self.counter = 0
+        else:
+            self.counter += 1
+
+        if self.counter >= self.patience:
+            self.should_stop = True
+            return True
+        return False
+
+
 @dataclass
 class TrainCfg:
     root: str = "data/isic2018"
@@ -26,6 +51,8 @@ class TrainCfg:
     outdir: str = "runs/unet_baseline"
     seed: int = 0
     fraction: float = 1.0
+    early_patience: int = 10
+    early_min_delta: float = 0.0
     resume: Optional[str] = None
     mixed_precision: bool = True
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
@@ -141,7 +168,7 @@ def TrainUNet(cfg: TrainCfg):
     scaler = torch.cuda.amp.GradScaler(
         enabled=cfg.mixed_precision and device.type == "cuda"
     )
-
+    stopper = EarlyStopping(cfg.early_patience, cfg.early_min_delta)
     best_dice = -1.0
     os.makedirs(cfg.outdir, exist_ok=True)
     with open(os.path.join(cfg.outdir, "cfg.json"), "w") as f:
@@ -182,6 +209,9 @@ def TrainUNet(cfg: TrainCfg):
                 },
                 os.path.join(cfg.outdir, "best.pt"),
             )
+        if stopper.step(val_dice):
+            print(f"Early stopping triggered at epoch {epoch}")
+            break
 
     print(f"Best Dice: {best_dice:.4f} → {os.path.join(cfg.outdir, 'best.pt')}")
 
