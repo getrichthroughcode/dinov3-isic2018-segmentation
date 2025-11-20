@@ -3,6 +3,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+def count_params(model: nn.Module) -> dict:
+    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    total = sum(p.numel() for p in model.parameters())
+    return {"trainable": trainable, "total": total}
+
+
 class DoubleConv(nn.Module):
     def __init__(self, in_ch, out_ch):
         super().__init__()

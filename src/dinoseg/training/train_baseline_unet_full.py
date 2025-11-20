@@ -8,7 +8,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Subset
 import torchvision.transforms.v2 as T
 
-from dinoseg.models.baseline_unet import UNet
+from dinoseg.models.baseline_unet import UNet, count_params
 from dinoseg.utils.metrics import SigmoidThreshold, DiceCoef, IoU
 from dinoseg.utils.seed import set_seed
 import any_gold as ag
@@ -132,6 +132,7 @@ def TrainUNet(cfg: TrainCfg):
     dl_train, dl_val = BuildLoaders(cfg)
 
     model = UNet(n_channels=3, n_classes=1, base_ch=32).to(device)
+    print(count_params(model))
     loss_fn = nn.BCEWithLogitsLoss()
     optim = torch.optim.AdamW(
         model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay
