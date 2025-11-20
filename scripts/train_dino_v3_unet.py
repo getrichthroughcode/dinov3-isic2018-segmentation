@@ -16,9 +16,15 @@ def main():
     ap.add_argument("--fraction", type=float, default=1.0)
     ap.add_argument("--frozen", type=bool, default=True)
     ap.add_argument("--no_amp", action="store_true", help="Disable mixed precision")
+    ap.add_argument(
+        "--model",
+        default="dinov3_vits16",
+        choices=["dinov3_vits16", "dinov3_vitb16", "dinov3_vitl16"],
+    )
     args = ap.parse_args()
     cfg = TrainCfg(
         root=args.root,
+        model=args.model,
         size=args.size,
         batch=args.batch,
         workers=args.workers,

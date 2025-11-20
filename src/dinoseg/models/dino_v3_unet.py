@@ -22,8 +22,8 @@ class DinoV3Encoder(nn.Module):
         super().__init__()
         name_map = {
             "dinov3_vits16": "vit_small_patch16_dinov3.lvd1689m",
-            "dinov3_vitb16": "dinov3_base_patch16_518",
-            "dinov3_vitl16": "dinov3_large_patch16_518",
+            "dinov3_vitb16": "vit_base_patch16_dinov3.lvd1689m",
+            "dinov3_vitl16": "dinov3_large_patch16_dinov3.lvd1689m",
         }
         timm_name = name_map.get(model_name, model_name)
         self.backbone = timm.create_model(
