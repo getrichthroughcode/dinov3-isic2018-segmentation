@@ -36,8 +36,12 @@ def evaluate(
         model = UNet(n_channels=3, n_classes=1, base_ch=32).to(device)
     elif model_name == "dinov2":
         model = DinoUNet(n_classes=1, encoder_name="dinov2_vits14").to(device)
-    elif model_name == "dinov3":
+    elif model_name == "dinov3s":
         model = Dinov3UNet(n_classes=1, encoder_name="dinov3_vits16").to(device)
+    elif model_name == "dinov3b":
+        model = Dinov3UNet(n_classes=1, encoder_name="dinov3_vitb16").to(device)
+    elif model_name == "dinov3l":
+        model = Dinov3UNet(n_classes=1, encoder_name="dinov3_vitl16").to(device)
     else:
         raise ValueError("Unknown model type. Choose among: baseline | dinov2 | dinov3")
 
@@ -92,7 +96,10 @@ def evaluate(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--model", type=str, required=True, choices=["baseline", "dinov2", "dinov3"]
+        "--model",
+        type=str,
+        required=True,
+        choices=["baseline", "dinov2", "dinov3s", "dinov3b", "dinov3l"],
     )
     parser.add_argument("--weights", type=str, required=True)
     parser.add_argument("--data-root", type=str, default="data/isic2018")
