@@ -1,0 +1,19 @@
+{
+  "root": "data/isic2018",
+  "model": "dinov3_vitl16",
+  "size": 256,
+  "batch": 8,
+  "workers": 4,
+  "epochs": 100,
+  "lr": 0.0003,
+  "weight_decay": 0.0001,
+  "outdir": "runs/dinov3l_unet_50_percent",
+  "seed": 42,
+  "fraction": 0.5,
+  "early_patience": 10,
+  "early_min_delta": 0.0,
+  "resume": null,
+  "mixed_precision": true,
+  "frozen": true,
+  "device": "cuda"
+}
