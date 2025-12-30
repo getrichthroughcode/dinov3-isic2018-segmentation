@@ -151,7 +151,7 @@ def build_model(args):
 
     # Print parameter count
     num_params = count_params(model)
-    print(f"Model parameters: {num_params:,}")
+    print(f"Model parameters: {num_params:_}")
 
     return model
 
