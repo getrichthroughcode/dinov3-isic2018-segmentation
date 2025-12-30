@@ -45,7 +45,35 @@ pip-wheel-metadata/
 *.swo
 .DS_Store
 
-# --- Model weights ---
+# --- Model weights & checkpoints ---
 weights/
 *.pth
 *.pt
+
+# --- AJOUTS SPÉCIFIQUES AU PROJET ---
+
+# Données ISIC2018 (ne pas versionner les images)
+data/
+!data/.gitkeep
+
+# Résultats d'expériences (checkpoints, logs, configs)
+runs/
+!runs/.gitkeep
+
+# Prédictions exportées
+predictions/
+exports/
+
+# Fichiers de configuration temporaires
+*.json.bak
+*.yaml.bak
+
+# Weights DINOv3 pré-entraînés (trop lourds)
+src/dinoseg/weights/*.pth
+!src/dinoseg/weights/.gitkeep
+
+# Fichiers temporaires de visualisation
+*.png.tmp
+*.jpg.tmp
+
+tests_import.py
