@@ -39,13 +39,13 @@ This repository contains the complete implementation and analysis of an **indepe
 
 **Models Compared**:
 - Baseline U-Net (7.76M params, trained from scratch)
-- DINOv3-Small + Custom Decoder (22M total, 5M trainable)
-- DINOv3-Base + Custom Decoder (86M total, 12M trainable)
-- DINOv3-Large + Custom Decoder (304M total, 18M trainable)
+- DINOv3-Small + Custom Decoder (25M total, 4M trainable)
+- DINOv3-Base + Custom Decoder (86M total, 4M trainable)
+- DINOv3-Large + Custom Decoder (156M total, 4M trainable)
 
-**Motivation**: While working as a Data Engineer and ML Engineer, I wanted to deeply understand when pre-trained foundation models (like DINOv3) actually provide value versus simpler approaches trained from scratch - particularly in data-constrained medical imaging scenarios.
+**Motivation**: As a recent graduate in Signal and Image Processing, I wanted to test some intuitions about foundation models and the self-supervised learning paradigm on a concrete use case. This project explores when pre-trained models (like DINOv3) actually provide value versus simpler approaches trained from scratch - particularly in data-constrained medical imaging scenarios.
 
-**Context**: This work was conducted independently to provide practitioners with evidence-based guidance on model selection based on dataset size.
+**Context**: This work was conducted independently during my job search period to deepen my understanding of transfer learning trade-offs and provide practitioners with evidence-based guidance on model selection based on dataset size.
 
 ---
 
@@ -95,13 +95,11 @@ This repository contains the complete implementation and analysis of an **indepe
 
 - Python 3.11+
 - PyTorch 2.0+
-- CUDA 11.8+ (for GPU training)
-
 ### Setup
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/dinov3-isic2018-segmentation.git
+git clone https://github.com/getrichthroughcode/dinov3-isic2018-segmentation.git
 cd dinov3-isic2018-segmentation
 
 # Create virtual environment
@@ -119,22 +117,12 @@ pip install -e .
 
 1. Download ISIC2018 dataset from [official source](https://challenge.isic-archive.com/data/)
 
-2. The dataset is managed automatically using the [any-gold](https://github.com/franchesoni/any-gold) library:
+2. The dataset is managed automatically using the [any-gold](https://github.com/goldener-data/any-gold) library:
    - Images are cached locally for efficient access
    - No manual organization required
    - Data splits handled by the library
 
-3. Configure data path in your training script:
 
-```python
-from dinoseg.data import ISICDataLoader
-
-# The library handles caching and organization
-loader = ISICDataLoader(
-    cache_dir="~/.cache/isic2018",
-    data_fraction=1.0,  # 1.0 = 100%, 0.5 = 50%, 0.25 = 25%
-)
-```
 
 ---
 
