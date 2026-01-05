@@ -1,79 +1,97 @@
-# --- Environnements virtuels ---
-.venv/
-venv/
-env/
-.dino/
-
-# --- Python cache & compilés ---
+tests_import.py
+# Python
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
+*$py.class
 *.so
-*.dll
-
-# --- Jupyter notebooks checkpoints ---
-.ipynb_checkpoints/
-
-# --- Logs & sorties ---
-*.log
-*.out
-*.err
-
-# --- Coverage & tests ---
-.coverage
-.coverage.*
-htmlcov/
-.cache/
-.pytest_cache/
-.tox/
-.nox/
-
-# --- Build & packaging ---
+.Python
 build/
+develop-eggs/
 dist/
-*.egg-info/
+downloads/
+eggs/
 .eggs/
-pip-wheel-metadata/
-*.manifest
-*.spec
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# --- IDE / éditeurs ---
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.dino/
+.conda/
+
+# PyTorch
+*.pt
+*.pth
+*.ckpt
+!checkpoints/*.pt
+#!runs/*/best.pt
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
+
+# OS
 .DS_Store
+Thumbs.db
 
-# --- Model weights & checkpoints ---
-weights/
-*.pth
-*.pt
-
-# --- AJOUTS SPÉCIFIQUES AU PROJET ---
-
-# Données ISIC2018 (ne pas versionner les images)
+# Data
 data/
-!data/.gitkeep
+datasets/
+*.zip
+*.tar
+*.tar.gz
+*.tar.zst
+*.h5
+*.hdf5
 
-# Résultats d'expériences (checkpoints, logs, configs)
-runs/
-!runs/.gitkeep
+# Logs
+logs/
+*.log
+wandb/
+tensorboard/
 
-# Prédictions exportées
+# Outputs
+outputs/
+results/
 predictions/
-exports/
+checkpoints/
+!runs/README.md
 
-# Fichiers de configuration temporaires
-*.json.bak
-*.yaml.bak
+# Temporary files
+tmp/
+temp/
+*.tmp
 
-# Weights DINOv3 pré-entraînés (trop lourds)
-src/dinoseg/weights/*.pth
-!src/dinoseg/weights/.gitkeep
+# Archives (keep only if needed for release)
+all_assets.zip
+full_data.zip
+low_data.zip
+moderate_data.zip
+runs.tar.zst
 
-# Fichiers temporaires de visualisation
-*.png.tmp
-*.jpg.tmp
-
-tests_import.py
+# Keep important artifacts
+!assets/**/*.png
+!assets/**/*.jpg
+!README.md
+!LICENSE
+!requirements.txt

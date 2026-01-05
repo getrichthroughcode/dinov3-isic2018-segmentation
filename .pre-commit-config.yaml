@@ -6,14 +6,13 @@ repos:
   - id: end-of-file-fixer
   - id: check-yaml
   - id: check-added-large-files
-
+    args: ['--maxkb=1500']  # Augmenté de 500KB à 1.5MB
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: v0.2.1
   hooks:
   - id: ruff
     args: [--fix, --exit-non-zero-on-fix]
   - id: ruff-format
-
 - repo: local
   hooks:
     - id: local-mypy
