@@ -1,4 +1,4 @@
-# 🧠 DINOSEG: Self-Supervised Representations for Skin Lesion Segmentatio
+# DINOv3-ISIC2018 Segmentation
 
 **Transfer Learning vs Training from Scratch for Medical Image Segmentation**
 
@@ -28,7 +28,7 @@ An empirical study comparing frozen DINOv3 encoders against baseline U-Net for s
 
 ## Overview
 
-This repository contains the complete implementation and analysis of my Master's thesis comparing transfer learning (frozen DINOv3 encoders) against training from scratch (baseline U-Net) for medical image segmentation.
+This repository contains the complete implementation and analysis of an **independent research project** comparing transfer learning (frozen DINOv3 encoders) against training from scratch (baseline U-Net) for medical image segmentation.
 
 **Research Questions**:
 1. Does transfer learning beat baseline in low-data scenarios?
@@ -39,9 +39,13 @@ This repository contains the complete implementation and analysis of my Master's
 
 **Models Compared**:
 - Baseline U-Net (7.76M params, trained from scratch)
-- DINOv3-Small + Custom Decoder (25M total, 5M trainable)
-- DINOv3-Base + Custom Decoder (90M total, 5M trainable)
-- DINOv3-Large + Custom Decoder (156M total, 5M trainable)
+- DINOv3-Small + Custom Decoder (22M total, 5M trainable)
+- DINOv3-Base + Custom Decoder (86M total, 12M trainable)
+- DINOv3-Large + Custom Decoder (304M total, 18M trainable)
+
+**Motivation**: While working as a Data Engineer and ML Engineer, I wanted to deeply understand when pre-trained foundation models (like DINOv3) actually provide value versus simpler approaches trained from scratch - particularly in data-constrained medical imaging scenarios.
+
+**Context**: This work was conducted independently to provide practitioners with evidence-based guidance on model selection based on dataset size.
 
 ---
 
@@ -114,24 +118,22 @@ pip install -e .
 ### Dataset Preparation
 
 1. Download ISIC2018 dataset from [official source](https://challenge.isic-archive.com/data/)
-2. Organize as follows:
 
-```
-data/
-├── ISIC2018_Task1_Training_Data/
-│   ├── ISIC_0000000.jpg
-│   ├── ISIC_0000001.jpg
-│   └── ...
-└── ISIC2018_Task1_Training_GroundTruth/
-    ├── ISIC_0000000_segmentation.png
-    ├── ISIC_0000001_segmentation.png
-    └── ...
-```
+2. The dataset is managed automatically using the [any-gold](https://github.com/franchesoni/any-gold) library:
+   - Images are cached locally for efficient access
+   - No manual organization required
+   - Data splits handled by the library
 
-3. Prepare data splits:
+3. Configure data path in your training script:
 
-```bash
-python scripts/prepare_data.py --data-dir data/ --output-dir data/processed/
+```python
+from dinoseg.data import ISICDataLoader
+
+# The library handles caching and organization
+loader = ISICDataLoader(
+    cache_dir="~/.cache/isic2018",
+    data_fraction=1.0,  # 1.0 = 100%, 0.5 = 50%, 0.25 = 25%
+)
 ```
 
 ---
@@ -194,7 +196,7 @@ dinov3-isic2018-segmentation/
 │   ├── training/
 │   │   └── trainer.py            # Training loop
 │   ├── data/
-│   │   └── loader.py             # Data loading utilities
+│   │   └── loader.py             # Data loading with any-gold
 │   └── utils/
 │       ├── metrics.py            # Dice, HD95 metrics
 │       ├── viz.py                # Visualization utilities
@@ -203,7 +205,6 @@ dinov3-isic2018-segmentation/
 ├── scripts/                  # Executable scripts
 │   ├── train.py                  # Training script
 │   ├── evaluate.py               # Evaluation script
-│   ├── prepare_data.py           # Data preparation
 │   └── visualize_samples.py      # Visualization
 │
 ├── assets/                   # Result visualizations
@@ -222,6 +223,8 @@ dinov3-isic2018-segmentation/
 ├── Makefile                 # Common commands
 ├── README.md                # This file
 └── LICENSE                  # MIT License
+
+**Note**: Dataset is managed by `any-gold` library and cached locally (default: `~/.cache/isic2018/`)
 ```
 
 ---
@@ -232,7 +235,7 @@ dinov3-isic2018-segmentation/
 
 - **25%**: ~650 images (low-data scenario)
 - **50%**: ~1,300 images (medium-data scenario)
-- **100%**: ~2,600 images (full dataset)
+- **100%**: ~2,594 images (full dataset)
 
 ### Models Evaluated
 
@@ -241,8 +244,8 @@ All models trained with:
 - **Scheduler**: CosineAnnealingLR
 - **Loss**: Binary Cross-Entropy with Logits
 - **Batch size**: 8
-- **Epochs**: 50 (with early stopping)
-- **Augmentations**: nnU-Net standard pipeline
+- **Epochs**: 100 (with early stopping)
+- **Preprocessing**: Images resized to 256×256
 
 ### Metrics
 
@@ -282,8 +285,8 @@ Visualization of inter-model consensus:
 ### Full Reproduction Pipeline
 
 ```bash
-# 1. Prepare data
-make prepare-data
+# 1. Install dependencies
+make install
 
 # 2. Train all models (warning: takes ~24 hours on H100)
 make train-all
@@ -294,6 +297,8 @@ make evaluate-all
 # 4. Generate visualizations
 make visualize-all
 ```
+
+**Note**: The dataset is automatically downloaded and cached by `any-gold` during first training run.
 
 ### Individual Model Training
 
@@ -328,9 +333,9 @@ Hybrid architecture with frozen encoder:
 - **Decoder**: Standard U-Net decoder
 
 **Trainable parameters**:
-- Small: 4M / 22M (23%)
-- Base: 4M / 86M (14%)
-- Large: 4M / 304M (6%)
+- Small: 5M / 22M (23%)
+- Base: 12M / 86M (14%)
+- Large: 18M / 304M (6%)
 
 Architecture inspired by [Dino U-Net (Gao et al., 2025)](https://arxiv.org/abs/2508.20909), re-implemented from scratch.
 
@@ -348,14 +353,13 @@ Detailed analysis of results available in:
 If you use this code or findings in your research, please cite:
 
 ```bibtex
-@mastersthesis{diallo2026transfer,
+@misc{diallo2026transfer,
   title={Transfer Learning vs Training from Scratch for Medical Image Segmentation:
          An Empirical Study on ISIC2018},
   author={Diallo, Abdoulaye},
-  school={ENSEIRB-MATMECA},
   year={2026},
-  type={Master's Thesis},
-  note={Signal and Image Processing}
+  howpublished={GitHub repository},
+  url={https://github.com/getrichthroughcode/dinov3-isic2018-segmentation}
 }
 ```
 
@@ -372,22 +376,17 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 - **Dataset**: ISIC2018 Skin Lesion Analysis Challenge
 - **Foundation Model**: DINOv3 by Meta AI ([Oquab et al., 2023](https://arxiv.org/abs/2304.07193))
 - **Architecture Inspiration**: Dino U-Net ([Gao et al., 2025](https://arxiv.org/abs/2508.20909))
+- **Data Management**: [any-gold](https://github.com/goldener-data/any-gold) library for efficient dataset handling
 
 ---
 
 ## Contact
 
 **Abdoulaye Diallo**
-ENSEIRB-MATMECA, Signal and Image Processing
+Signal and Image processing Engineer
 Email: [abdoulayediallo338@gmail.com]
-[LinkedIn](https://www.linkedin.com/in/abdiallo-ai)
-GitHub: [@getrichthroughcode](https://github.com/getrichthroughcode)
+LinkedIn: [https://www.linkedin.com/in/abdiallo-ai]
 
----
-
-## Contributing
-
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ---
 
@@ -398,6 +397,5 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 - Complete implementation of baseline U-Net and DINOv3-UNet variants
 - Experiments on 3 data regimes (25%, 50%, 100%)
 - Comprehensive analysis with 96 visualizations
-- Technical blog post with findings
 
 ---
