@@ -40,7 +40,7 @@ This repository contains the complete implementation and analysis of an **indepe
 **Models Compared**:
 - Baseline U-Net (7.76M params, trained from scratch)
 - DINOv3-Small + Custom Decoder (25M total, 4M trainable)
-- DINOv3-Base + Custom Decoder (86M total, 4M trainable)
+- DINOv3-Base + Custom Decoder (90M total, 4M trainable)
 - DINOv3-Large + Custom Decoder (156M total, 4M trainable)
 
 **Motivation**: As a recent graduate in Signal and Image Processing, I wanted to test some intuitions about foundation models and the self-supervised learning paradigm on a concrete use case. This project explores when pre-trained models (like DINOv3) actually provide value versus simpler approaches trained from scratch - particularly in data-constrained medical imaging scenarios.
@@ -204,7 +204,6 @@ dinov3-isic2018-segmentation/
 │   ├── test_forward.py           # Model forward pass tests
 │   └── test_metrics.py           # Metric calculation tests
 │
-├── notebooks/                # Analysis notebooks (optional)
 │
 ├── requirements.txt          # Python dependencies
 ├── pyproject.toml           # Package configuration
@@ -237,8 +236,8 @@ All models trained with:
 
 ### Metrics
 
-- **Dice Coefficient**: Volumetric overlap (primary metric)
-- **Hausdorff Distance 95%**: Boundary accuracy
+- **Dice Coefficient**:
+- **Intersection over Union (Jaccard)**:
 
 ---
 
@@ -276,7 +275,6 @@ Visualization of inter-model consensus:
 # 1. Install dependencies
 make install
 
-# 2. Train all models (warning: takes ~24 hours on H100)
 make train-all
 
 # 3. Evaluate all models
@@ -321,9 +319,9 @@ Hybrid architecture with frozen encoder:
 - **Decoder**: Standard U-Net decoder
 
 **Trainable parameters**:
-- Small: 5M / 22M (23%)
-- Base: 12M / 86M (14%)
-- Large: 18M / 304M (6%)
+- Small: 4M / 25M (16%)
+- Base: 4M / 90M (4%)
+- Large: 4M / 152M (2%)
 
 Architecture inspired by [Dino U-Net (Gao et al., 2025)](https://arxiv.org/abs/2508.20909), re-implemented from scratch.
 
@@ -332,7 +330,7 @@ Architecture inspired by [Dino U-Net (Gao et al., 2025)](https://arxiv.org/abs/2
 ## Analysis & Blog Post
 
 Detailed analysis of results available in:
-- **Published Article**: [Link to Medium/Blog] (coming soon)
+- **Published Blog**: [Link to Medium/Blog] (coming soon - curating it)
 
 ---
 
@@ -372,13 +370,10 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 
 **Abdoulaye Diallo**
 Signal and Image processing Engineer
-Email: [abdoulayediallo338@gmail.com]
 LinkedIn: [https://www.linkedin.com/in/abdiallo-ai]
 
 
 ---
-
-## Changelog
 
 ### v1.0.0 (January 2026)
 - Initial release
